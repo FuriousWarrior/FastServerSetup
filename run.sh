@@ -8,7 +8,7 @@
 set -euo pipefail
 
 # Configuration
-REPO_URL="${REPO_URL:-https://github.com/FuriousWarrior/FastServerSetup/}"
+REPO_URL="${REPO_URL:-https://raw.githubusercontent.com/FuriousWarrior/FastServerSetup/refs/heads/main}"
 TEMP_DIR="/tmp/FastServerSetup-$$"
 
 RED='\033[0;31m'
