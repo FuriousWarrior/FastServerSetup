@@ -1,7 +1,7 @@
 #!/bin/bash
 #===============================================================================
 # Download and Run (Git Clone Version)
-# Version: 2.0.1
+# Version: 2.0.2
 # Usage: curl -fsSL https://raw.githubusercontent.com/FuriousWarrior/FastServerSetup/refs/heads/main/run.sh | bash
 #===============================================================================
 
@@ -78,8 +78,9 @@ echo "  2) Modular version (main.sh)"
 echo "  3) Выйти и запустить вручную"
 echo ""
 
+# Читаем ввод из /dev/tty, так как stdin занят pipe'ом
 while true; do
-    read -p "Выбор (1-3): " choice
+    read -p "Выбор (1-3): " choice < /dev/tty
     case "$choice" in
         1|2|3) break ;;
         *) echo -e "${RED}Неверный выбор. Пожалуйста, введите 1, 2 или 3.${NC}" ;;
