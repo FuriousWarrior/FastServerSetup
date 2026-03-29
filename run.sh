@@ -1,14 +1,14 @@
 #!/bin/bash
 #===============================================================================
-# Download and Run
-# Version: 1.0.0
+# Download and Run (Git Clone Version)
+# Version: 2.0.0
 # Usage: curl -fsSL https://raw.githubusercontent.com/FuriousWarrior/FastServerSetup/refs/heads/main/run.sh | bash
 #===============================================================================
 
 set -euo pipefail
 
 # Configuration
-REPO_URL="${REPO_URL:-https://raw.githubusercontent.com/FuriousWarrior/FastServerSetup/refs/heads/main}"
+REPO_GIT_URL="${REPO_GIT_URL:-https://github.com/FuriousWarrior/FastServerSetup.git}"
 TEMP_DIR="/tmp/FastServerSetup-$$"
 
 RED='\033[0;31m'
@@ -34,44 +34,32 @@ cleanup() {
 
 trap cleanup EXIT
 
-info "Загрузка скриптов из репозитория..."
-info "URL: ${REPO_URL}"
-
-mkdir -p "${TEMP_DIR}"
-
-# Download main installer
-if curl -fsSL "${REPO_URL}/install.sh" -o "${TEMP_DIR}/install.sh" 2>/dev/null; then
-    success "install.sh загружен"
-    chmod +x "${TEMP_DIR}/install.sh"
-else
-    error "Не удалось загрузить install.sh"
+# Проверка наличия git
+if ! command -v git &> /dev/null; then
+    error "Git не установлен. Пожалуйста, установите git и запустите скрипт снова."
     exit 1
 fi
 
-# Download modular version
-if curl -fsSL "${REPO_URL}/main.sh" -o "${TEMP_DIR}/main.sh" 2>/dev/null; then
-    success "main.sh загружен"
-    chmod +x "${TEMP_DIR}/main.sh"
+info "Клонирование репозитория из ${REPO_GIT_URL}..."
+mkdir -p "${TEMP_DIR}"
+
+# Отключаем интерактивные запросы git (например, запрос пароля/ключа)
+export GIT_TERMINAL_PROMPT=0
+
+if git clone --depth 1 "${REPO_GIT_URL}" "${TEMP_DIR}" 2>&1; then
+    success "Репозиторий успешно склонирован в ${TEMP_DIR}"
+else
+    error "Не удалось клонировать репозиторий. Проверьте URL и сетевое соединение."
+    exit 1
 fi
 
-# Download config
-mkdir -p "${TEMP_DIR}/config"
-if curl -fsSL "${REPO_URL}/config/settings.conf" -o "${TEMP_DIR}/config/settings.conf" 2>/dev/null; then
-    success "settings.conf загружен"
-fi
 
-# Download modules
-mkdir -p "${TEMP_DIR}/modules"
-for i in $(seq -w 1 10); do
-    module_file="0${i}-*.sh"
-    if curl -fsSL "${REPO_URL}/modules/${i}-system-update.sh" -o "${TEMP_DIR}/modules/${i}-system-update.sh" 2>/dev/null || \
-       curl -fsSL "${REPO_URL}/modules/0${i}-system-update.sh" -o "${TEMP_DIR}/modules/0${i}-system-update.sh" 2>/dev/null; then
-        success "Модуль ${i} загружен"
-        chmod +x "${TEMP_DIR}/modules/"*.sh 2>/dev/null || true
-    fi
-done
+# Устанавливаем права на выполнение для скриптов
+chmod +x "${TEMP_DIR}/install.sh" 2>/dev/null || true
+chmod +x "${TEMP_DIR}/main.sh" 2>/dev/null || true
+chmod +x "${TEMP_DIR}/modules/"*.sh 2>/dev/null || true
 
-# Run installer
+
 echo ""
 echo -e "${GREEN}╔════════════════════════════════════════╗${NC}"
 echo -e "${GREEN}║   Загрузка завершена!                  ║${NC}"
