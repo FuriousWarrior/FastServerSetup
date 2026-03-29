@@ -9,35 +9,11 @@ module_sysctl_tuning() {
     local sysctl_file="/etc/sysctl.d/99-remnawave-tuning.conf"
     
     # Проверка поддержки BBR: bbr3 (ядро 6.12+) → bbr2 (XanMod) → bbr (стандартный)
-    info "Проверка поддержки BBR..."
-    BBR_MODULE=""
-    BBR_ALGO="bbr" # Устанавливаем значение по умолчанию, чтобы не было пустым
-    
-    # 1. Пробуем BBR3 (встроен в ядро 6.12+)
-    if grep -q "bbr3" /proc/sys/net/ipv4/tcp_available_congestion_control 2>/dev/null; then
-        BBR_MODULE="tcp_bbr"
-        BBR_ALGO="bbr3"
-        success "BBR3 доступен (ядро $(uname -r))"
-    # 2. Пробуем BBR2 (XanMod / пропатченные ядра)
-    elif grep -q "bbr2" /proc/sys/net/ipv4/tcp_available_congestion_control 2>/dev/null; then
-        BBR_MODULE="tcp_bbr2"
-        BBR_ALGO="bbr2"
-        success "BBR2 доступен (ядро $(uname -r))"
-    elif grep -q "tcp_bbr2" /proc/modules 2>/dev/null || modprobe tcp_bbr2 2>/dev/null; then
-        BBR_MODULE="tcp_bbr2"
-        BBR_ALGO="bbr2"
-        success "Модуль BBR2 загружен"
-    # 3. Пробуем стандартный BBR
-    elif grep -q "bbr" /proc/sys/net/ipv4/tcp_available_congestion_control 2>/dev/null; then
-        BBR_MODULE="tcp_bbr"
-        BBR_ALGO="bbr"
-        success "Стандартный BBR доступен (ядро $(uname -r))"
-    else
-        # Если ничего не найдено, оставляем стандартный bbr как попытку
-        warn "BBR2/BBR3 недоступны на текущем ядре ($(uname -r)). Используем стандартный bbr."
-    fi
-    
-    info "Используется алгоритм: ${BBR_ALGO}"
+    info "Проверка поддержки BBR и загрузка модулей"
+    depmod -a
+
+    modinfo tcp_bbr
+    info "Используется алгоритм: bbr
     
     # Создание конфигурационного файла
     info "Создание конфигурации sysctl..."
@@ -54,7 +30,7 @@ net.ipv4.conf.all.accept_source_route = 0
 net.ipv4.conf.default.accept_source_route = 0
 # === Оптимизация TCP и BBR ===
 net.core.default_qdisc = fq
-net.ipv4.tcp_congestion_control = ${BBR_ALGO}
+net.ipv4.tcp_congestion_control = bbr
 net.ipv4.tcp_fastopen = 3
 net.ipv4.tcp_tw_reuse = 1
 net.ipv4.tcp_max_tw_buckets = 262144
