@@ -13,32 +13,60 @@ module_ssh_key() {
         ssh_user="root"
     fi
     
-    # Create .ssh directory
-    local home_dir=$(getent passwd "${ssh_user}" | cut -d: -f6)
-    local ssh_dir="${home_dir}/.ssh"
+    # Проверка существования пользователя
+    if ! id "${ssh_user}" >/dev/null 2>&1; then
+        warn "Пользователь ${ssh_user} не существует"
+        return 1
+    fi
     
+    # Определение домашней директории
+    local home_dir
+    home_dir=$(getent passwd "${ssh_user}" | cut -d: -f6)
+    
+    if [[ -z "${home_dir}" ]]; then
+        warn "Не удалось определить домашнюю директорию пользователя ${ssh_user}"
+        return 1
+    fi
+    
+    local ssh_dir="${home_dir}/.ssh"
+    local auth_keys="${ssh_dir}/authorized_keys"
+    
+    # Создание .ssh директории
     mkdir -p "${ssh_dir}"
     chmod 700 "${ssh_dir}"
     chown "${ssh_user}:${ssh_user}" "${ssh_dir}"
     
-    # Get public key from user
-    echo ""
-    echo "Вставьте ваш SSH публичный ключ (нажмите Enter дважды для завершения):"
-    echo "=========================================="
-    
-    local auth_keys="${ssh_dir}/authorized_keys"
+    # Очистка файла ключей
     > "${auth_keys}"
     
-    while IFS= read -r line; do
-        [[ -z "${line}" ]] && break
-        echo "${line}" >> "${auth_keys}"
-    done
+    # === Основная логика ===
+    if [[ -n "${SSH_PUBLIC_KEY}" ]]; then
+        info "Используется SSH ключ из конфигурации"
+        
+        # Поддержка многострочного ввода (\n и реальные переносы)
+        echo -e "${SSH_PUBLIC_KEY}" >> "${auth_keys}"
+    else
+        echo ""
+        echo "Вставьте ваш SSH публичный ключ (нажмите Enter дважды для завершения):"
+        echo "=========================================="
+        
+        while IFS= read -r line; do
+            [[ -z "${line}" ]] && break
+            echo "${line}" >> "${auth_keys}"
+        done
+    fi
     
-    # Set permissions
+    # Проверка что ключ действительно добавлен
+    if [[ ! -s "${auth_keys}" ]]; then
+        warn "SSH ключ не добавлен!"
+        return 1
+    fi
+    
+    # Права доступа
     chmod 600 "${auth_keys}"
     chown "${ssh_user}:${ssh_user}" "${auth_keys}"
     
-    success "SSH ключ добавлен для пользователя: ${ssh_user}"
+    success "SSH ключ(и) добавлен(ы) для пользователя: ${ssh_user}"
 }
 
 module_ssh_key

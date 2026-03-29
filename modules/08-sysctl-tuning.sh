@@ -30,19 +30,14 @@ module_sysctl_tuning() {
         success "Модуль BBR2 загружен"
     else
         # BBR2 недоступен — предлагаем установить XanMod ядро
-        warn "BBR2/BBR3 недоступны на текущем ядре ($(uname -r)) Установите сначала XanMode"
-
-    log_info "Используется алгоритм: ${BBR_ALGO}"
+        warn "BBR2/BBR3 недоступны на текущем ядре ($(uname -r)) Установите сначала XanMod"
+    fi
+    info "Используется алгоритм: ${BBR_ALGO}"
 
     # Создание конфигурационного файла
-    log_info "Создание конфигурации sysctl..."
+    info "Создание конфигурации sysctl..."
 
     cat > "$sysctl_file" << EOF
-# ╔════════════════════════════════════════════════════════════════╗
-# ║  Remnawave Network Tuning Configuration                        ║
-# ║  Оптимизация сети для VPN/Proxy нод                           ║
-# ╚════════════════════════════════════════════════════════════════╝
-
 # === IPv6 (Отключен для стабильности, lo оставлен для совместимости) ===
 net.ipv6.conf.all.disable_ipv6 = 1
 net.ipv6.conf.default.disable_ipv6 = 1

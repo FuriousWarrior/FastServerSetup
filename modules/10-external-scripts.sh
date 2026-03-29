@@ -17,8 +17,8 @@ module_external_scripts() {
     done
     
     # Special handling for remnanode script
-    local remna_url="https://raw.githubusercontent.com/begugla0/remnawave-node-scripts/main/remnanode-install.sh"
-    local remna_file="remnanode-install.sh"
+    local remna_url=""
+    local remna_file=""
     
     if curl -O "${remna_url}" && chmod +x "${remna_file}"; then
         sudo "./${remna_file}" && rm -f "${remna_file}"
