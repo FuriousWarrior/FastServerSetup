@@ -34,10 +34,17 @@ cleanup() {
 
 trap cleanup EXIT
 
-# Проверка наличия git
+# Проверка и установка git
 if ! command -v git &> /dev/null; then
-    error "Git не установлен. Пожалуйста, установите git и запустите скрипт снова."
-    exit 1
+    warn "Git не установлен. Пытаюсь установить..."
+    apt-get update -y && sudo apt-get install -y git sudo
+    
+    # Повторная проверка после установки
+    if ! command -v git &> /dev/null; then
+        error "Git не удалось установить. Пожалуйста, установите его вручную."
+        exit 1
+    fi
+    success "Git успешно установлен"
 fi
 
 info "Клонирование репозитория из ${REPO_GIT_URL}..."

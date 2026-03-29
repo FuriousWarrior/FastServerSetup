@@ -1,7 +1,7 @@
 #!/bin/bash
 #===============================================================================
 # Debian Server Automation Script
-# Version: 2.0.1
+# Version: 2.0.2
 # Description: Modular server setup and hardening for Debian 13 (Trixie)
 #===============================================================================
 
@@ -22,7 +22,12 @@ LOGS_DIR="${SCRIPT_DIR}/logs"
 LOG_FILE="${LOGS_DIR}/setup_$(date +%Y%m%d_%H%M%S).log"
 
 # Load configuration
-source "${CONFIG_DIR}/settings.conf"
+if [[ -f "${CONFIG_DIR}/settings.conf" ]]; then
+    source "${CONFIG_DIR}/settings.conf"
+else
+    echo -e "${RED}[ERROR] Config file not found: ${CONFIG_DIR}/settings.conf${NC}"
+    exit 1
+fi
 
 #===============================================================================
 # Logging Functions
@@ -70,6 +75,7 @@ run_module() {
     
     if [[ -f "${module_path}" ]]; then
         info "Запуск модуля: ${module}"
+        # Исполняем модуль (source, чтобы он мог использовать функции и переменные)
         source "${module_path}"
         success "Модуль ${module} выполнен"
     else
@@ -99,7 +105,7 @@ show_menu() {
     echo "  8) Sysctl тюнинг"
     echo "  9) Установка Fail2Ban"
     echo " 10) Внешние скрипты"
-    echo " 11) Установка XanMode"
+    echo " 11) Установка XanMod"
     echo " 111) Выполнить ВСЕ модули"
     echo " 222) Выход"
     echo ""
@@ -118,9 +124,36 @@ main() {
     info "Версия Debian: $(cat /etc/debian_version)"
     info "Версия ядра: $(uname -r)"
     
-    if [[ "${INTERACTIVE_MODE:-true}" == "true" ]]; then
+    # Определяем, интерактивный ли режим
+    # Если INTERACTIVE_MODE явно установлен в false или stdin не терминал, то неинтерактивный
+    if [[ "${INTERACTIVE_MODE:-auto}" == "false" ]] || [[ ! -t 0 ]]; then
+        info "Неинтерактивный режим: выполнение всех модулей"
+        for module in $(ls -1 "${MODULES_DIR}"/*.sh 2>/dev/null | sort); do
+            run_module "$(basename "${module}")"
+        done
+    else
         show_menu
-        read -p "Выберите номер (1-12): " choice
+        
+        # Чтение ввода из терминала (даже если stdin перенаправлен)
+        local choice=""
+        while true; do
+            # Пытаемся читать из /dev/tty, если он доступен
+            if [[ -e /dev/tty ]]; then
+                read -p "Выберите номер (1-11, 111, 222): " choice < /dev/tty
+            else
+                # fallback на обычный stdin
+                read -p "Выберите номер (1-11, 111, 222): " choice
+            fi
+            
+            case "$choice" in
+                1|2|3|4|5|6|7|8|9|10|11|111|222)
+                    break
+                    ;;
+                *)
+                    echo -e "${RED}Неверный выбор. Пожалуйста, введите номер из списка.${NC}"
+                    ;;
+            esac
+        done
         
         case $choice in
             1) run_module "01-system-update.sh" ;;
@@ -134,26 +167,17 @@ main() {
             9) run_module "09-fail2ban-setup.sh" ;;
             10) run_module "10-external-scripts.sh" ;;
             11) run_module "11-xanmod.sh" ;;
-            111) 
+            111)
                 info "Запуск всех модулей..."
-                for module in $(ls -1 "${MODULES_DIR}"/*.sh | sort); do
-                    run_module "$(basename ${module})"
+                for module in $(ls -1 "${MODULES_DIR}"/*.sh 2>/dev/null | sort); do
+                    run_module "$(basename "${module}")"
                 done
                 ;;
-            222) 
-                info "Выход"
+            222)
+                info "Выход по запросу пользователя"
                 exit 0
                 ;;
-            *) 
-                error "Неверный выбор"
-                exit 1
-                ;;
         esac
-    else
-        # Non-interactive mode - run all modules
-        for module in $(ls -1 "${MODULES_DIR}"/*.sh | sort); do
-            run_module "$(basename ${module})"
-        done
     fi
     
     success "Настройка сервера завершена!"
