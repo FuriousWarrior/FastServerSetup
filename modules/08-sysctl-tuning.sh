@@ -13,7 +13,7 @@ module_sysctl_tuning() {
     depmod -a
 
     modinfo tcp_bbr
-    info "Используется алгоритм: bbr
+    info "Используется алгоритм: bbr"
     
     # Создание конфигурационного файла
     info "Создание конфигурации sysctl..."
