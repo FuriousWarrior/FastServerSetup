@@ -58,4 +58,4 @@ module_xanmod () {
 
 }
 
-module_module_xanmod
+module_xanmod

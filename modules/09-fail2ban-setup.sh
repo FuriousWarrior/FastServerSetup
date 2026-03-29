@@ -65,7 +65,7 @@ maxretry = 5
 # ── SSH защита от брутфорса ──────────────────────────────────────
 [sshd]
 enabled = true
-port = 22
+port = 2225
 filter = sshd
 backend = systemd
 maxretry = 5
@@ -125,7 +125,7 @@ EOF
     echo -e "Конфиг: /etc/fail2ban/jail.local${NC}"
     echo
 
-    success "Fail2Ban настроен (внешний IP: ${external_ip}, порт SSH: ${SSH_PORT})"
+    success "Fail2Ban настроен"
 }
 
 module_fail2ban_setup
