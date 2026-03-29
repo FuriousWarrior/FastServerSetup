@@ -1,7 +1,7 @@
 #!/bin/bash
 #===============================================================================
 # Download and Run (Git Clone Version)
-# Version: 2.0.0
+# Version: 2.0.1
 # Usage: curl -fsSL https://raw.githubusercontent.com/FuriousWarrior/FastServerSetup/refs/heads/main/run.sh | bash
 #===============================================================================
 
@@ -53,12 +53,19 @@ else
     exit 1
 fi
 
+# Удаляем .git, так как это временная копия
+rm -rf "${TEMP_DIR}/.git"
 
 # Устанавливаем права на выполнение для скриптов
 chmod +x "${TEMP_DIR}/install.sh" 2>/dev/null || true
 chmod +x "${TEMP_DIR}/main.sh" 2>/dev/null || true
 chmod +x "${TEMP_DIR}/modules/"*.sh 2>/dev/null || true
 
+# Проверка наличия основного установщика
+if [ ! -f "${TEMP_DIR}/install.sh" ] && [ ! -f "${TEMP_DIR}/main.sh" ]; then
+    error "В репозитории не найдены ни install.sh, ни main.sh"
+    exit 1
+fi
 
 echo ""
 echo -e "${GREEN}╔════════════════════════════════════════╗${NC}"
@@ -70,16 +77,31 @@ echo "  1) Single-file installer (install.sh)"
 echo "  2) Modular version (main.sh)"
 echo "  3) Выйти и запустить вручную"
 echo ""
-read -p "Выбор (1-3): " choice
+
+while true; do
+    read -p "Выбор (1-3): " choice
+    case "$choice" in
+        1|2|3) break ;;
+        *) echo -e "${RED}Неверный выбор. Пожалуйста, введите 1, 2 или 3.${NC}" ;;
+    esac
+done
 
 case $choice in
     1)
+        if [ ! -f "${TEMP_DIR}/install.sh" ]; then
+            error "Файл install.sh не найден в репозитории"
+            exit 1
+        fi
         info "Запуск single-file installer..."
         sudo "${TEMP_DIR}/install.sh"
         ;;
     2)
+        if [ ! -f "${TEMP_DIR}/main.sh" ]; then
+            error "Файл main.sh не найден в репозитории"
+            exit 1
+        fi
         info "Запуск modular version..."
-        cd "${TEMP_DIR}"
+        cd "${TEMP_DIR}" || { error "Не удалось перейти в ${TEMP_DIR}"; exit 1; }
         sudo ./main.sh
         ;;
     3)
@@ -87,10 +109,6 @@ case $choice in
         echo "Для запуска выполните:"
         echo "  cd ${TEMP_DIR}"
         echo "  sudo ./install.sh"
-        ;;
-    *)
-        error "Неверный выбор"
-        exit 1
         ;;
 esac
 
