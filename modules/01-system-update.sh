@@ -45,6 +45,8 @@ module_system_update() {
     info "Установка необходимых пакетов..."
     DEBIAN_FRONTEND=noninteractive apt install -y "${REQUIRED_PACKAGES[@]}"
     success "Пакеты установлены"
+
+
 }
 
 module_system_update

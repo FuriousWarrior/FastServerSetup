@@ -1,7 +1,7 @@
 #!/bin/bash
 #===============================================================================
 # Debian Server Automation Script
-# Version: 1.0.0
+# Version: 2.0.1
 # Description: Modular server setup and hardening for Debian 13 (Trixie)
 #===============================================================================
 
@@ -99,8 +99,9 @@ show_menu() {
     echo "  8) Sysctl тюнинг"
     echo "  9) Установка Fail2Ban"
     echo " 10) Внешние скрипты"
-    echo " 11) Выполнить ВСЕ модули"
-    echo " 12) Выход"
+    echo " 11) Установка XanMode"
+    echo " 111) Выполнить ВСЕ модули"
+    echo " 222) Выход"
     echo ""
 }
 
@@ -132,13 +133,14 @@ main() {
             8) run_module "08-sysctl-tuning.sh" ;;
             9) run_module "09-fail2ban-setup.sh" ;;
             10) run_module "10-external-scripts.sh" ;;
-            11) 
+            11) run_module "11-xanmod.sh" ;;
+            111) 
                 info "Запуск всех модулей..."
                 for module in $(ls -1 "${MODULES_DIR}"/*.sh | sort); do
                     run_module "$(basename ${module})"
                 done
                 ;;
-            12) 
+            222) 
                 info "Выход"
                 exit 0
                 ;;

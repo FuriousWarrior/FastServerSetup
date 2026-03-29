@@ -4,6 +4,10 @@
 
 ## Быстрый старт
 
+```
+apt update && apt install git
+```
+
 ```bash
 # Скачать
 git clone https://github.com/FuriousWarrior/FastServerSetup.git
@@ -27,8 +31,11 @@ chmod +x modules/*.sh
 # Запуск
 sudo ./main.sh
 ```
+Или 
 
-
+```
+curl -fsSL https://raw.githubusercontent.com/FuriousWarrior/FastServerSetup/refs/heads/main/run.sh | bash
+```
 
 Добавление нового модуля
 
